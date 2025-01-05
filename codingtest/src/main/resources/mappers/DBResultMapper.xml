@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.brick.codingtest.Solution3.mapper.DBResultHelper">
+    <select id="getData" resultType="com.brick.codingtest.Solution3.dto.EmployeeResult">
+        SELECT
+            직원.emp_no AS empNo,
+            직원.first_name AS firstName,
+            직원.last_name AS lastName,
+            직원.gender AS gender,
+            직원.hire_date AS hireDate,
+            부서.dept_name AS deptName,
+            직급.title AS title,
+            MAX(급여.salary) AS maxSalary
+        FROM
+            employees 직원
+                JOIN dept_emp 사원정보 ON 직원.emp_no = 사원정보.emp_no
+                JOIN departments 부서 ON 사원정보.dept_no = 부서.dept_no
+                JOIN titles 직급 ON 직원.emp_no = 직급.emp_no
+                JOIN salaries 급여 ON 직원.emp_no = 급여.emp_no
+        WHERE
+           직원.hire_date >= '2000-01-01'
+        GROUP BY
+            직원.emp_no, 직원.first_name, 직원.last_name, 직원.gender, 직원.hire_date, 부서.dept_name, 직급.title
+        ORDER BY
+            직원.emp_no;
+    </select>
+
+</mapper>

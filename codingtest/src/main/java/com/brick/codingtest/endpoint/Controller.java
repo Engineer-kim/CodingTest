@@ -1,31 +1,32 @@
 package com.brick.codingtest.endpoint;
 
 import com.brick.codingtest.Solution1.Calculatevalue;
-import com.brick.codingtest.Solution3.DB_Result;
+import com.brick.codingtest.Solution3.dto.EmployeeResult;
+import com.brick.codingtest.Solution3.service.DBService;
 import com.brick.codingtest.Solution5.RandomResponse;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.List;
 import java.util.Map;
 
+import static com.brick.codingtest.Solution2.PinPong.PORT;
 import static com.brick.codingtest.Solution678.Bracket.longestValidParentheses;
 
 @RestController
+@RequestMapping("/api")
 public class Controller {
 
-    private final DB_Result dbResult;
+    private final DBService dbService;
     private final RandomResponse randomResponse;
 
 
-    public Controller(DB_Result dbResult,RandomResponse randomResponse) {
-        this.dbResult = dbResult;
+    public Controller(DBService dbService, RandomResponse randomResponse) {
+        this.dbService = dbService;
         this.randomResponse = randomResponse;
     }
 
@@ -35,7 +36,7 @@ public class Controller {
      *
      * 문제에 대한 결과(엔드포인트)입니다
      *
-     * http://localhost:8080/calculate 호출 하시어 확인 부탁드리겠습니다 감사합니다
+     * http://localhost:8080/api/calculate 호출 하시어 확인 부탁드리겠습니다 감사합니다
      * */
     @GetMapping("/calculate")
     public String calculateValues() {
@@ -49,17 +50,13 @@ public class Controller {
      *
      * 문제에 대한 결과(엔드포인트)입니다
      *
-     * http://localhost:8080/dbResult 호출 하시어 확인 부탁드리겠습니다 감사합니다
+     * http://localhost:8080/api/dbResult 호출 하시어 확인 부탁드리겠습니다 감사합니다
      * */
     @GetMapping("/dbResult")
-    public List<String> getDBResults() {
-        List<String> results = new ArrayList<>();
-        try {
-            results = dbResult.getData();
-        } catch (Exception e) {
-            e.printStackTrace();
-            results.add("Error fetching data: " + e.getMessage());
-        }
+    public List<EmployeeResult> getDBResults() {
+        List<EmployeeResult> results;
+        results = dbService.getData();
+        System.out.println("Results: " + results);
         return results;
     }
 
@@ -69,7 +66,7 @@ public class Controller {
      *
      * 문제에 대한 결과(엔드포인트)입니다
      *
-     * http://localhost:8080/inYongGu 호출 하시어 확인 부탁드리겠습니다 감사합니다
+     * http://localhost:8080/api/inYongGu 호출 하시어 확인 부탁드리겠습니다 감사합니다
      * */
     @GetMapping("/inYongGu")
     public String getRandomResponses() {
@@ -77,10 +74,34 @@ public class Controller {
         return randomResponse.printFormattedResponse(responses);
     }
 
+    /**
+     * 서버 실행후
+     * 괄호가 알맞게 짝지어진 가장 긴 부분의 길이를 구하시오. ‘(‘와 ‘)’로만 이루어진 문자열에서, 괄호
+     * 가 알맞게 짝지어진 가장 긴 부분의 길이를 구한다. “(()”의 경우 가장 긴 유효한 부분은 “()” 이므로
+     *
+     * 문제에 대한 결과(엔드포인트)입니다
+     *
+     *http://localhost:8080/api/bracket?input={소괄호 갯수}
+     * 호출 하시어 확인 부탁드리겠습니다 감사합니다
+     * */
     @GetMapping("/bracket")
     public String getBracketResponses(@RequestParam String input) {
         int result = longestValidParentheses(input);
         return String.format("Input: %s\nResult: %d", input, result);
+    }
+
+
+
+    @PostMapping("/ping")
+    public String ping(@RequestParam String message) {
+        try (Socket socket = new Socket("127.0.0.1", PORT);
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+            out.println(message);
+            return in.readLine();
+        } catch (IOException e) {
+            return "Error: " + e.getMessage();
+        }
     }
 }
 
